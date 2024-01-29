@@ -1,0 +1,7 @@
+POST https://helsinki-course-phonebook-backend.onrender.com/api/persons
+Content-Type: application/json
+
+{
+    "name" : "testing",
+    "number" : "0000-999999" 
+}
