@@ -1,2 +1,2 @@
 # phonebook_backend
-helsinki course phonebook backend
+helsinki course phonebook backend excercise
