@@ -1,0 +1,22 @@
+{
+  "name": "phonebook_backend",
+  "version": "1.0.0",
+  "description": "helsinki course phonebook backend excercise",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui" : "rm -rf dist && cd ../../React\\ course\\ helsinki/phonebook && npm run build && cp -r dist ../../Github/phonebook_backend"
+  },
+  "author": "kamiel",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
