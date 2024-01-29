@@ -7,10 +7,11 @@
 // 3. npm run build -> run the build of the front end to build the dist folder
 // 4. cp -r dist ../../Github/phonebook_backend -> copy the dist folder into this repository
 // -> "build:ui": "rm -rf dist && cd ../../React\\ course\\ helsinki/phonebook && npm run build && cp -r dist ../../Github/phonebook_backend"
-
+require('dotenv').config() //file that contains sensitive info, also put this file in gitignored to not upload to github
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors') //make it posible to access the backend from other origin (cross origin ...)
+const Person = require('./modules/person')
 const app = express()
 
 const requestLogger = (request, response, next) => {
@@ -38,59 +39,78 @@ app.use(cors()) //makes it posible to access the backend from other origin
 app.use(requestLogger) //after express.json becasue otherwise the body of the request would be undefined (express.json handles the body of request to json)
 
 //morgan is used to log requests to the console
-morgan.token('req-body', function (req, res) { 
+morgan.token('req-body', function (req, res) {
     return JSON.stringify(req.body);
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body -------'))
 
-let persons = [
-    {
-        "id": 1,
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": 2,
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": 3,
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": 4,
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]
+// let persons = [
+//     {
+//         "id": 1,
+//         "name": "Arto Hellas",
+//         "number": "040-123456"
+//     },
+//     {
+//         "id": 2,
+//         "name": "Ada Lovelace",
+//         "number": "39-44-5323523"
+//     },
+//     {
+//         "id": 3,
+//         "name": "Dan Abramov",
+//         "number": "12-43-234345"
+//     },
+//     {
+//         "id": 4,
+//         "name": "Mary Poppendieck",
+//         "number": "39-23-6423122"
+//     }
+// ]
 
 app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
 })
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    //response.json(persons)
+    Person.find({})
+        .then(result => {
+            response.json(result)
+        })
 })
 
+// app.get('/api/persons/:id', (request, response) => {
+//     const id = Number(request.params.id)
+//     const person = persons.find(person => id === person.id)
+//     if (person) {
+//         response.json(person)
+//     }
+//     else {
+//         response.status(404).end()
+//     }
+
+// })
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => id === person.id)
-    if (person) {
+    Person.findById(request.params.id).then(person => {
         response.json(person)
-    }
-    else {
-        response.status(404).end()
-    }
-
+    })
 })
 
+// app.get('/info', (request, response) => {
+//     response.send(
+//         `<p>The phonebook has info for ${persons.length} people</p>
+//        <p>${new Date()}</p>`
+//     )
+// })
 app.get('/info', (request, response) => {
-    response.send(
-        `<p>The phonebook has info for ${persons.length} people</p>
-       <p>${new Date()}</p>`
-    )
+    Person.find({})
+        .then(result => {
+            console.log(result)
+            response.send(
+                `<p>The phonebook has info for ${result.length} people</p>
+                <p>${new Date()}</p>`
+            )
+        })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -100,41 +120,58 @@ app.delete('/api/persons/:id', (request, response) => {
     response.status(204).end()
 })
 
-const generateId = () => {
-    return Math.random() * 1000
-}
-app.post('/api/persons', (request, response) => {
+// const generateId = () => {
+//     return Math.random() * 1000
+// }
+// app.post('/api/persons', (request, response) => {
+//     const body = request.body
+//     const id = generateId()
+//     //console.log(body)
+
+//     if (!body.name || !body.number) {
+//         return response.status(400).json({
+//             error: "empty body"
+//         })
+//     }
+
+//     const existing = persons.filter(person => person.name === body.name)
+//     //console.log(existing)
+//     if (existing.length > 0) {
+//         return response.status(400).json({
+//             error: "Person already created"
+//         })
+//     }
+
+//     const person = {
+//         name: body.name,
+//         number: body.number,
+//         id: id
+//     }
+//     persons = persons.concat(person)
+
+//     response.json(person)
+// })
+
+app.post('/api/persons', (request,response) => {
     const body = request.body
-    const id = generateId()
-    //console.log(body)
 
-    if (!body.name || !body.number) {
-        return response.status(400).json({
-            error: "empty body"
-        })
+    if (body.name === undefined || body.number === undefined) {
+        return response.status(400).json({ error: 'content missing' })
     }
 
-    const existing = persons.filter(person => person.name === body.name)
-    //console.log(existing)
-    if (existing.length > 0) {
-        return response.status(400).json({
-            error: "Person already created"
-        })
-    }
-
-    const person = {
+    const person = new Person({
         name: body.name,
         number: body.number,
-        id: id
-    }
-    persons = persons.concat(person)
+    })
 
-    response.json(person)
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
 })
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001 //Fly.io and Render configure the application port based on that environment variable
+const PORT = process.env.PORT //Fly.io and Render configure the application port based on that environment variable
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
